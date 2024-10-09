@@ -57,15 +57,20 @@ color: #FF9900;
   Lego is one of the most well-recognized brands on the planet. Children and adults are enthralled by the seemingly endless ways bricks can be combined to create everything from urban landscapes to colonies on other planets.
   For some, the joy derived from the initial build pales in comparison to discovering a new arrangement to the pieces that has never been done before.
 
-  Lego presents myriad different problems that can be solved with computer vision. We aim to employ classic CV methods of object detection to create an application capable of categorizing
-  bricks scattered in 2D/3D as well as identifying brick compositions/quantities of partial/complete builds.
+  Lego presents myriad different problems that can be solved with computer vision. We aim to employ classic CV methods of general object detection to create an application capable of categorizing
+  scattered bricks and minifigures as well as identifying entire sets.
 
   This application can be used to solve problems that anyone who has played with Legos has encountered, like searching for the next piece of the build among all the other pieces of the set,
-  or identifying the pieces needed to complete a partial build.
+  identfying which set a particular minifigure comes from, or identifying a set without the box.
 
   <h3 style="text-align: center">Approach</h3>
   We will use existing datasets consisting of 3D-generated Lego pieces as well as LDraw which is a CAD tool used for generating 3D Lego pieces.
   We also plan to create our own datasets by capturing Lego pieces. 
+
+  To classify individual Lego pieces and minifigures, a feature-based approach employing corner detection will be used to draw bounding boxes around individual Lego pieces.
+  Then a SVM will be used to classify every occurence as either a brick or minifigure. A further level of classification is done on minifigures
+  to determine what set it comes from, if any.
+
   <br><br>
 
     <hr>
