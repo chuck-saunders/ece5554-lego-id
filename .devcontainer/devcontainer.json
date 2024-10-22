@@ -1,0 +1,64 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.241.1/containers/docker-from-docker-compose
+{
+    "name": "${localWorkspaceFolderBasename}",
+    "dockerComposeFile": [
+        "${localWorkspaceFolder}/.devcontainer/docker-compose.devcontainer.yaml"
+    ],
+    "service": "devcontainer",
+
+    "workspaceFolder": "/home/team16/${localWorkspaceFolderBasename}",
+
+    // Setup the environment
+    "initializeCommand": "${localWorkspaceFolder}/.devcontainer/setup_env.sh",
+
+    // Perform any post-creation setup
+    "onCreateCommand": "${containerWorkspaceFolder}/.devcontainer/setup_container.sh",
+
+    // Sets or overrides environment variables for the container for supporting services/tools (or sub-processes like terminals)
+    "remoteEnv": {
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "XDG_RUNTIME_DIR": "/run/user/${containerEnv:UID}"
+    },
+
+    // Add ptrace capability and configure security to facilitate debugging and display forwarding
+    "capAdd": [
+        "SYS_PTRACE",
+        "NET_ADMIN"
+    ],
+    "securityOpt": [
+        "seccomp=unconfined",
+        "apparmor=unconfined" // This allows RViz and other dbus-based apps to run
+    ],
+
+    // Configure tool-specific properties.
+    "customizations": {
+        // Configure properties specific to VS Code.
+        "vscode": {
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance"
+            ],
+            "settings": {
+                "dev.containers.dockerCredentialHelper": false,
+                "files.exclude": {
+                    ".devcontainer/.vscode-server": true
+                },
+                "remote.localPortHost": "allInterfaces",
+                "search.exclude": {
+                    ".devcontainer/.vscode-server": true
+                },
+                "terminal.integrated.defaultProfile.linux": "bash",
+                // This setting prevents characters in the terminal from getting jumbled when characters are sent too fast
+                "terminal.integrated.localEchoLatencyThreshold": -1,
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "bash",
+                        "args": ["--rcfile", "${workspaceFolder}/.vscode/.bashrc"]
+                    }
+                }
+            }
+        }
+    }
+}

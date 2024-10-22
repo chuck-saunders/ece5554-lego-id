@@ -1,0 +1,59 @@
+services:
+    devcontainer:
+        build:
+            context: .
+            dockerfile: Dockerfile.devcontainer
+            args:
+                - username=${DOCKER_USER}
+                - uid=${HOST_UID}
+                - ssh_port=${SSH_PORT}
+        user: ${DOCKER_USER}
+        volumes:
+            - ${HOST_PROJECT_PATH}:${DOCKER_PROJECT_PATH}
+            - ${HOST_NETRC_FILE}:${DOCKER_NETRC_FILE}
+            - ${HOST_SSH_FILE}:${DOCKER_SSH_FILE}
+            - ${HOST_DOCKER_DIR}:${DOCKER_DOCKER_DIR}
+            - ${HOME}:${HOME}
+            - ${HOME}/.config:${DOCKER_HOME}/.config
+            - ${HOME}/.cache/JetBrains:${DOCKER_HOME}/.cache/JetBrains  # where PyCharm installs the backend server
+            - ${HOME}/.local/share/JetBrains:${DOCKER_HOME}/.local/share/JetBrains # where PyCharm plugins are installed
+            - ${HOME}/.gitconfig:${DOCKER_HOME}/.gitconfig
+            - ${HOST_PROJECT_PATH}/.devcontainer/.vscode-server:${DOCKER_PROJECT_PATH}/.vscode-server
+            - ${SSH_AUTH_SOCK:-/dev/null}:${SSH_AUTH_SOCK:-/home/$DOCKER_USER/.ssh-auth-sock-null}
+            - /tmp/.X11-unix:/tmp/.X11-unix
+
+        env_file: .env
+        environment:
+            ARCH: ${ARCH:-amd64}
+            VCS_REF: ${VCS_REF:-dirty}
+            VCS_SHORT_REF: ${VCS_SHORT_REF:-dirty}
+            VCS_URL: ${VCS_URL:-dirty}
+            VCS_DESCRIBE: ${GIT_DESCRIBE:-none}
+            BUILD_NUMBER: ${BUILD_NUMBER:-non-ci}
+            BUILD_DATE: ${BUILD_DATE:-non-ci}
+            BRANCH_NAME: ${BRANCH_NAME:-non-ci}
+            DOCKER_TAG: ${DOCKER_TAG:-non-ci}
+            SSH_AUTH_SOCK: ${SSH_AUTH_SOCK}
+            HOST_SSH_AUTH_SOCK: ${SSH_AUTH_SOCK}
+            DOCKER_PROJECT_PATH: ${DOCKER_PROJECT_PATH}
+            HOST_USER: ${USER}
+            DOCKER_USER: ${DOCKER_USER}
+            DISPLAY: ${DISPLAY}
+            
+        # Overrides default command so things don't shut down after the process ends.
+        command: /bin/sh -c "while sleep 1000; do :; done"
+        working_dir:
+            ${DOCKER_PROJECT_PATH}
+        network_mode: host # ensures rtps_host_id in GUID remains common
+        ipc: host
+        pid: host
+        init: true
+        
+        # If you've got an nvidia graphics card you'll need to uncomment this to be able to use it.
+        #deploy:
+        #    resources:
+        #        reservations:
+        #            devices:
+        #              - driver: nvidia
+        #                count: 1
+        #                capabilities: [gpu]

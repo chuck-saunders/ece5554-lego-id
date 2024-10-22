@@ -1,0 +1,69 @@
+FROM ubuntu:20.04
+
+ARG TARGETARCH=amd64
+ARG TARGETOS=linux
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# Install Apt Items
+RUN apt-get update && \
+    apt-get install -y apt-transport-https software-properties-common && \
+    apt-add-repository -y ppa:deadsnakes/ppa && \
+    apt-add-repository -y ppa:git-core/ppa && \
+    apt-add-repository -y ppa:ubuntu-toolchain-r/test && \
+    apt-get update && \
+# Standard apt tools
+# python3-demjson is needed for jsonlint
+    apt-get install -qy curl sudo unzip ssh zip libacl1-dev amazon-ecr-credential-helper jq python3-demjson bc && \
+# User experience enhancers
+    apt-get install -qy bash-completion && \
+# Git setup
+    apt-get install -qy git git-lfs && \
+# Cleanup
+    apt-get clean
+
+# Get other items that aid development
+RUN apt-get update && \
+    apt-get install -qy autoconf libtool screen nano tmuxinator vim && \
+    apt-get clean
+
+ARG uid=1001:1001
+ARG username=team16
+
+RUN (id -u $username >/dev/null 2>&1 || useradd -m $username -l -u "$(echo $uid | cut -d: -f1)") && \
+    (usermod -u "$(echo $uid | cut -d: -f1)" $username && groupmod -g "$(echo $uid | cut -d: -f2)" $username) && \
+    (usermod -aG sudo $username && echo $username ' ALL=(ALL:ALL) NOPASSWD:ALL' >> /etc/sudoers)
+
+RUN mkdir /home/$username/.cache && \
+    chown -R $username:$username /home/$username/.cache
+
+RUN mkdir /home/$username/.ssh && \
+    ssh-keyscan github.com >> /home/$username/.ssh/known_hosts && \
+    chown -R $username:$username /home/$username/.ssh
+
+ARG ssh_port=8888
+
+RUN echo "Port $ssh_port" >> /etc/ssh/sshd_config && \
+    echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config && \
+    echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/ssh/sshd_config
+    
+# Python pip installs go here
+# RUN python3 -m pip install --user whatever_you_need
+
+# Required for opencv-python
+RUN apt-get update && apt-get install -qy libgl1 ffmpeg
+
+# Necessary for folder ownership stuffs to get JetBrains products (PyCharm) to work correctly
+RUN mkdir -p /home/$username/.local/share && \
+    chown -R $username:$username /home/$username/.local
+
+# If you have an nvidia graphics card, this will expose it to the devcontainer
+# NOTE: If you run nvidia-smi from inside the container and get unexpected results,
+#       try:
+#       sudo apt install nvidia-container-toolkit nvidia-container-runtime
+#       then restart the container and try nvidia-smi again.    
+# ENV NVARCH=x86_64
+# ENV NVIDIA_DRIVER_CAPABILITIES=compute,graphics,utility,video,display
+# ENV NVIDIA_VISIBLE_DEVICES=all
+
+WORKDIR /home/$username
