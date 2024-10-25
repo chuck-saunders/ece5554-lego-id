@@ -1,0 +1,1 @@
+"""Enums used in the brick-id project"""
