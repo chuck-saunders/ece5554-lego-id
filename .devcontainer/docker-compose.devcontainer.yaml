@@ -24,18 +24,8 @@ services:
 
         env_file: .env
         environment:
-            ARCH: ${ARCH:-amd64}
-            VCS_REF: ${VCS_REF:-dirty}
-            VCS_SHORT_REF: ${VCS_SHORT_REF:-dirty}
-            VCS_URL: ${VCS_URL:-dirty}
-            VCS_DESCRIBE: ${GIT_DESCRIBE:-none}
-            BUILD_NUMBER: ${BUILD_NUMBER:-non-ci}
-            BUILD_DATE: ${BUILD_DATE:-non-ci}
-            BRANCH_NAME: ${BRANCH_NAME:-non-ci}
-            DOCKER_TAG: ${DOCKER_TAG:-non-ci}
             SSH_AUTH_SOCK: ${SSH_AUTH_SOCK}
             HOST_SSH_AUTH_SOCK: ${SSH_AUTH_SOCK}
-            DOCKER_PROJECT_PATH: ${DOCKER_PROJECT_PATH}
             HOST_USER: ${USER}
             DOCKER_USER: ${DOCKER_USER}
             DISPLAY: ${DISPLAY}

@@ -53,6 +53,9 @@ RUN echo "Port $ssh_port" >> /etc/ssh/sshd_config && \
 # Required for opencv-python
 RUN apt-get update && apt-get install -qy libgl1 ffmpeg
 
+# This lib is required for PyCharm to run:
+RUN apt-get install -qy libxtst6
+
 # Necessary for folder ownership stuffs to get JetBrains products (PyCharm) to work correctly
 RUN mkdir -p /home/$username/.local/share && \
     chown -R $username:$username /home/$username/.local

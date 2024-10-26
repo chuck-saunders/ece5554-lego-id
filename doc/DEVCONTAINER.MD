@@ -40,3 +40,16 @@ That's it! You're in the devcontainer now. At this point VSCode should look and 
 
 
 
+## Using with PyCharm
+
+Post script on the install notes here: If you prefer using PyCharm, follow the steps above to get the docker-cli installed. This lets you run commands like `devcontainer up` to start the devcontainer and `devcontainer exec` to run commands inside the container. One of the volumes mounted by the devcontainer is `~/.local/share/JetBrains`, which should be where the files are setup on your machine. If they're not there then I *highly recommend* moving them there or you'll need to update paths in the devcontainer files to get the volumes to mount correctly. 
+
+I've installed PyCharm using the JetBrains Toolbox, and the bash script that starts PyCharm is located (on my machine) at `~/.local/share/JetBrains/Toolbox/apps/pycharm-professional/bin/pycharm.sh`. I have this project cloned on my machine to `~/Documents/personal/projects/ece5554-lego-id`. If you find the paths to `pycharm.sh` and `ece5554-lego-id` on your machine, you can create an alias to start PyCharm inside the devcontainer:
+
+```
+alias brick_id='cd ~/Documents/personal/projects/ece5554-lego-id && devcontainer up && devcontainer exec sh ~/.local/share/JetBrains/Toolbox/apps/pycharm-professional/bin/pycharm.sh'
+```
+
+Add this to your `~/.bash_aliases` file, remember to `source ~/.bashrc` after doing so, then run `brick_id` and then PyCharm starts up inside the devcontainer.
+
+NOTE: You may get a notice that your PyCharm is unlicensed; this is a quirk to the startup method provided and it's not clear where the licensing information is kept. You can accept the trial terms or you can go to your account and "Download a file for offline activation" and use that key to manually activate the copy running in the devcontainer. If you rebuild the devcontainer you'll have to repeat this step.
