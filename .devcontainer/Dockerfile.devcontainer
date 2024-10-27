@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ARG TARGETARCH=amd64
 ARG TARGETOS=linux
@@ -12,6 +12,8 @@ RUN apt-get update && \
     apt-add-repository -y ppa:git-core/ppa && \
     apt-add-repository -y ppa:ubuntu-toolchain-r/test && \
     apt-get update && \
+# Get python
+    apt-get install -qy python3-all python-is-python3 && \
 # Standard apt tools
 # python3-demjson is needed for jsonlint
     apt-get install -qy curl sudo unzip ssh zip libacl1-dev amazon-ecr-credential-helper jq python3-demjson bc && \
@@ -21,10 +23,10 @@ RUN apt-get update && \
     apt-get install -qy git git-lfs && \
 # Cleanup
     apt-get clean
+    
 
 # Get other items that aid development
-RUN apt-get update && \
-    apt-get install -qy autoconf libtool screen nano tmuxinator vim && \
+RUN apt-get install -qy autoconf libtool screen nano tmuxinator vim && \
     apt-get clean
 
 ARG uid=1001:1001
@@ -48,7 +50,7 @@ RUN echo "Port $ssh_port" >> /etc/ssh/sshd_config && \
     echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/ssh/sshd_config
     
 # Required for opencv-python
-RUN apt-get update && apt-get install -qy libgl1 ffmpeg
+RUN apt-get install -qy libgl1 ffmpeg
 # Get pip...
 RUN apt-get install -qy python3-pip
 # ...and then install opencv-python
