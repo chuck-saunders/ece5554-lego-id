@@ -1,0 +1,2 @@
+# Keep the directory, but not the contents.
+# B200C dataset images in this folder (or any folder under the project root) will be available inside the devcontainer.

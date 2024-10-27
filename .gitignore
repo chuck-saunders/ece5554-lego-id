@@ -9,6 +9,9 @@ __pycache__/
 # JetBrains idea folder
 .idea/
 
+# Ignore images in the B200C dataset folder so we don't commit them
+B200C/
+
 # Distribution / packaging
 .Python
 build/
