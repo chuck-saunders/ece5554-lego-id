@@ -1,0 +1,11 @@
+[project]
+name = "brick_id"
+version="0.0.1"
+
+dependencies=[
+    "opencv-python",
+]
+
+[tool.setuptools.packages.find]
+include = ["brick-id"]
+exclude = ["B200C"]
