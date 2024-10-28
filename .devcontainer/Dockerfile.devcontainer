@@ -53,6 +53,8 @@ RUN echo "Port $ssh_port" >> /etc/ssh/sshd_config && \
 RUN apt-get install -qy libgl1 ffmpeg
 # Get pip...
 RUN apt-get install -qy python3-pip
+# Update pip
+RUN python3 -m pip install --upgrade pip
 # ...and then install opencv-python
 RUN python3 -m pip install opencv-python
 
