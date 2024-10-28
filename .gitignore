@@ -12,6 +12,11 @@ __pycache__/
 # Ignore images in the B200C dataset folder so we don't commit them
 B200C/
 
+# Ignore the output files in the dataset directory
+brick_id/dataset/*.csv
+brick_id/dataset/*.pdf
+brick_id/dataset/*.md
+
 # Distribution / packaging
 .Python
 build/
