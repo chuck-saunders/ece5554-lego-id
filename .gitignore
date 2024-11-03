@@ -16,6 +16,7 @@ B200C/
 brick_id/dataset/*.csv
 brick_id/dataset/*.pdf
 brick_id/dataset/*.md
+birck_id/dataset/imgs
 
 # Distribution / packaging
 .Python
