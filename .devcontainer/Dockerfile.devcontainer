@@ -57,6 +57,10 @@ RUN apt-get install -qy python3-pip
 RUN python3 -m pip install --upgrade pip
 # ...and then install opencv-python
 RUN python3 -m pip install opencv-python
+# This is required to pull images from URLs
+RUN python3 -m pip install requests
+# This is required to create the PDF files for the pick lists for the dataset images
+RUN python3 -m pip install fpdf2
 
 # This lib is required for PyCharm to run:
 RUN apt-get install -qy libxtst6

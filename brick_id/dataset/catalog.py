@@ -2,6 +2,10 @@ from collections import OrderedDict
 
 # Turns out, the Lego brick IDs are not strictly numeric; quite a few have a 'b' suffix, which means I can't use an
 # integer for the model.
+#
+# I want this to be an OrderedDict so it gets converted to lists deterministically. A normal dict does not guarantee
+# order and so converting to list may get the entries out of order, which would then affect how they're sampled when
+# building the datasets.
 def allowable_parts() -> OrderedDict[str, str]:
     parts_dict = OrderedDict()
 
@@ -116,24 +120,24 @@ def allowable_parts() -> OrderedDict[str, str]:
     parts_dict['33909'] = 'Tile, Modified 2 x 2 with Studs on Edge'
     parts_dict['33291'] = 'Plate, Round 1 x 1 with Flower Edge (4 Knobs / Petals)'
     parts_dict['32952'] = 'Brick, Modified 1 x 1 x 1 2/3 with Studs on Side'
-    parts_dict['32607'] = ' Plant Plate, Round 1 x 1 with 3 Leaves'
-    parts_dict['32526'] = ' Technic, Liftarm, Modified Bent Thick L-Shape 3 x 5'
-    parts_dict['32525'] = ' Technic, Liftarm Thick 1 x 11'
-    parts_dict['32524'] = ' Technic, Liftarm Thick 1 x 7'
-    parts_dict['32523'] = ' Technic, Liftarm Thick 1 x 3'
-    parts_dict['3245c'] = ' Brick 1 x 2 x 2 with Inside Stud Holder'
-    parts_dict['32316'] = ' Technic, Liftarm Thick 1 x 5'
-    parts_dict['32278'] = ' Technic, Liftarm Thick 1 x 15'
-    parts_dict['32184'] = ' Technic, Axle and Pin Connector Perpendicular 3L with Center Pin Hole'
-    parts_dict['32140'] = ' Technic, Liftarm, Modified Bent Thick L-Shape 2 x 4'
+    parts_dict['32607'] = 'Plant Plate, Round 1 x 1 with 3 Leaves'
+    parts_dict['32526'] = 'Technic, Liftarm, Modified Bent Thick L-Shape 3 x 5'
+    parts_dict['32525'] = 'Technic, Liftarm Thick 1 x 11'
+    parts_dict['32524'] = 'Technic, Liftarm Thick 1 x 7'
+    parts_dict['32523'] = 'Technic, Liftarm Thick 1 x 3'
+    parts_dict['3245c'] = 'Brick 1 x 2 x 2 with Inside Stud Holder'
+    parts_dict['32316'] = 'Technic, Liftarm Thick 1 x 5'
+    parts_dict['32278'] = 'Technic, Liftarm Thick 1 x 15'
+    parts_dict['32184'] = 'Technic, Axle and Pin Connector Perpendicular 3L with Center Pin Hole'
+    parts_dict['32140'] = 'Technic, Liftarm, Modified Bent Thick L-Shape 2 x 4'
     parts_dict['32123'] = 'Technic Bush 1/2 Smooth'
     parts_dict['32073'] = 'Technic, Axle 5L'
-    parts_dict['32064'] = ' Technic, Brick 1 x 2 with Axle Hole'
-    parts_dict['32062'] = ' Technic, Axle 2L Notched'
-    parts_dict['32054'] = ' Technic, Pin 3L with Friction Ridges and Stop Bush'
-    parts_dict['32028'] = ' Plate, Modified 1 x 2 with Door Rail'
-    parts_dict['32013'] = ' Technic, Axle and Pin Connector Angled #1'
-    parts_dict['32000'] = ' Technic, Brick 1 x 2 with Holes'
+    parts_dict['32064'] = 'Technic, Brick 1 x 2 with Axle Hole'
+    parts_dict['32062'] = 'Technic, Axle 2L Notched'
+    parts_dict['32054'] = 'Technic, Pin 3L with Friction Ridges and Stop Bush'
+    parts_dict['32028'] = 'Plate, Modified 1 x 2 with Door Rail'
+    parts_dict['32013'] = 'Technic, Axle and Pin Connector Angled #1'
+    parts_dict['32000'] = 'Technic, Brick 1 x 2 with Holes'
     parts_dict['3070b'] = 'Tile 1 x 1'
     parts_dict['3069b'] = 'Tile 1 x 2'
     parts_dict['3068b'] = 'Tile 2 x 2'
@@ -216,3 +220,23 @@ def allowable_parts() -> OrderedDict[str, str]:
     parts_dict['11090'] = 'Bar Holder with Clip'
     parts_dict['10247'] = 'Plate, Modified 2 x 2 with Pin Hole - Full Cross Support Underneath'
     return parts_dict
+
+# After creating a script to scrape images, several parts were not found. These not-found parts appear to have been
+# referenced in the B200C by a less common part number that has a more-common equivalent.
+#
+# Below is a list of the not-found parts and the more-common equivalent part numbers.
+# Where the allowable_parts is an OrderedDict, for sampling purposes, this is just used for item lookup, so
+# a standard dict can be used here.
+def alternative_part_numbers() -> dict:
+    alternatives = dict()
+    alternatives['3062b'] = '3062'
+    alternatives['3068b'] = '3068'
+    alternatives['3069b'] = '3069'
+    alternatives['3070b'] = '3070'
+    alternatives['15379'] = '3873'
+    alternatives['32123'] = '4265c'
+    alternatives['59443'] = '6538c'
+    alternatives['88072'] = '4623b'
+    alternatives['88323'] = '57518'
+    return alternatives
+
