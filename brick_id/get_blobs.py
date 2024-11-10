@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def get_blobs(img: np.ndarray):
+
+    # Code adapted from the following answer on Stack Overflow:
+    # https://stackoverflow.com/a/48130014/5171120
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # binarize the image
     ret, bw = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
