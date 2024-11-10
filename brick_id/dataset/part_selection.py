@@ -2,6 +2,7 @@ import numpy as np
 import csv
 import requests
 import os
+from typing import List
 
 from fpdf import FPDF
 from PIL import Image
@@ -36,7 +37,7 @@ class RandomizedDataset(object):
 
 # Trying to get text formatted in the PDF was a bear; apparently there's no way to control the line spacing on a word-
 # wrapped cell using fpdf2 so eventually I gave up and wrote this function to manually word-wrap.
-def wrap_text_to_column_width(text:str, width: int) -> list[str]:
+def wrap_text_to_column_width(text:str, width: int) -> List[str]:
     if len(text) <= width:
         return [text]
     split_idx = width-1
