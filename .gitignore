@@ -6,6 +6,18 @@ __pycache__/
 # C extensions
 *.so
 
+# JetBrains idea folder
+.idea/
+
+# Ignore images in the B200C dataset folder so we don't commit them
+B200C/
+
+# Ignore the output files in the dataset directory
+brick_id/dataset/*.csv
+brick_id/dataset/*.pdf
+brick_id/dataset/*.md
+brick_id/dataset/imgs/
+
 # Distribution / packaging
 .Python
 build/

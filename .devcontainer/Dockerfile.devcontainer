@@ -1,0 +1,85 @@
+FROM ubuntu:20.04
+
+ARG TARGETARCH=amd64
+ARG TARGETOS=linux
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# Install Apt Items
+RUN apt-get update && \
+    apt-get install -y apt-transport-https software-properties-common && \
+    apt-add-repository -y ppa:deadsnakes/ppa && \
+    apt-add-repository -y ppa:git-core/ppa && \
+    apt-add-repository -y ppa:ubuntu-toolchain-r/test && \
+    apt-get update && \
+# Get python
+    apt-get install -qy python3-all python-is-python3 && \
+# Standard apt tools
+# python3-demjson is needed for jsonlint
+    apt-get install -qy curl sudo unzip ssh zip libacl1-dev amazon-ecr-credential-helper jq python3-demjson bc && \
+# User experience enhancers
+    apt-get install -qy bash-completion && \
+# Git setup
+    apt-get install -qy git git-lfs && \
+# Cleanup
+    apt-get clean
+    
+
+# Get other items that aid development
+RUN apt-get install -qy autoconf libtool screen nano tmuxinator vim && \
+    apt-get clean
+
+ARG uid=1001:1001
+ARG username=team16
+
+RUN (id -u $username >/dev/null 2>&1 || useradd -m $username -l -u "$(echo $uid | cut -d: -f1)") && \
+    (usermod -u "$(echo $uid | cut -d: -f1)" $username && groupmod -g "$(echo $uid | cut -d: -f2)" $username) && \
+    (usermod -aG sudo $username && echo $username ' ALL=(ALL:ALL) NOPASSWD:ALL' >> /etc/sudoers)
+
+RUN mkdir /home/$username/.cache && \
+    chown -R $username:$username /home/$username/.cache
+
+RUN mkdir /home/$username/.ssh && \
+    ssh-keyscan github.com >> /home/$username/.ssh/known_hosts && \
+    chown -R $username:$username /home/$username/.ssh
+
+ARG ssh_port=8888
+
+RUN echo "Port $ssh_port" >> /etc/ssh/sshd_config && \
+    echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config && \
+    echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/ssh/sshd_config
+    
+# Required for opencv-python
+RUN apt-get install -qy libgl1 ffmpeg
+# Get pip...
+RUN apt-get install -qy python3-pip
+# Update pip
+RUN python3 -m pip install --upgrade pip
+# ...and then install opencv-python AND the appropriate version of PyQt5
+RUN python3 -m pip install opencv-python PyQt5
+# Need qt5 
+RUN apt-get install -qy qt5-default
+# This is required to pull images from URLs
+RUN python3 -m pip install requests
+# This is required to create the PDF files for the pick lists for the dataset images
+RUN python3 -m pip install fpdf2
+# Get matplotlib for better plotting (IMO)
+RUN python3 -m pip install matplotlib
+
+# This lib is required for PyCharm to run:
+RUN apt-get install -qy libxtst6
+
+# Necessary for folder ownership stuffs to get JetBrains products (PyCharm) to work correctly
+RUN mkdir -p /home/$username/.local/share && \
+    chown -R $username:$username /home/$username/.local
+
+# If you have an nvidia graphics card, this will expose it to the devcontainer
+# NOTE: If you run nvidia-smi from inside the container and get unexpected results,
+#       try:
+#       sudo apt install nvidia-container-toolkit nvidia-container-runtime
+#       then restart the container and try nvidia-smi again.    
+# ENV NVARCH=x86_64
+# ENV NVIDIA_DRIVER_CAPABILITIES=compute,graphics,utility,video,display
+# ENV NVIDIA_VISIBLE_DEVICES=all
+
+WORKDIR /home/$username
