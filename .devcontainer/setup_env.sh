@@ -99,6 +99,9 @@ fi
 SSH_PORT=${SSH_PORT:-8888}
 echo "SSH_PORT=${SSH_PORT}" >> $ENV_FILE
 
+# For troubleshooting xcb/matplotlib issues, uncomment the next line:
+#echo "QT_DEBUG_PLUGINS=1" >> $ENV_FILE
+
 # If you want to use nVidia drivers then you'll need to uncomment this:
 # Define which nVidia drivers/libs to load into the container
 # See https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/1.10.0/user-guide.html#driver-capabilities
