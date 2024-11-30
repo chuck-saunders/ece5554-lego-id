@@ -2,34 +2,34 @@ import sys
 import cv2
 import os
 
+from solutions.chuck_solution import ChuckSolution
 from brick_id.solutions.kayla_solution import KaylaSolution
 from brick_id.solutions.shane_solution import ShaneSolution
-from brick_id.get_blobs import get_blobs
-from solutions.chuck_solution import ChuckSolution
-#from solutions.kayla_solution import KaylaSolution
-#from solutions.shane_solution import ShaneSolution
+from brick_id.object_segmentation import object_segmentation
+import matplotlib.pyplot as plt
 from brick_id.voter import vote_on
-#from dataset.catalog import allowable_parts
 
 
 def identify(path: str):
-    #print(f'Attempting to identify file at {path}')
     img = cv2.imread(path)
-    blobs = get_blobs(img)
-    solutions = [ChuckSolution(), KaylaSolution(), ShaneSolution()]
-    # results = list()
-    # current_blob = 0
-    # for blob in blobs:
-    #     guesses = list()
-    #     for solution in solutions:
-    #         guess = solution.identify(blob)
-    #         guesses.append(guess)
-    #     result = vote_on(blob, guesses)
-    #     print(f'Blob {current_blob} identified as {result}')
-    #     current_blob += 1
-    #     results.append((blob, result))
-    # # TODO: Show the results, calculate scores, etc.
 
+    object_extents = object_segmentation(img)
+    solutions = [ChuckSolution(), KaylaSolution(), ShaneSolution()]
+    results = list()
+    for object_extent in object_extents:
+        xmin, xmax, ymin, ymax = object_extent
+        cropped_img = img[ymin:ymax, xmin:xmax]
+        plt.imshow(cropped_img)
+        plt.axis('off')
+        plt.show()
+        guesses = list()
+        for solution in solutions:
+            guess = solution.identify(cropped_img)
+            guesses.append(guess)
+        print(f'Got {len(guesses)} guesses')
+        result = vote_on(cropped_img, guesses)
+        results.append((cropped_img, result))
+    # TODO: Show the results, calculate scores, etc.
 
 
 if __name__ == '__main__':
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         file_path = sys.argv[1]
     except IndexError:
         print(f'No arg passed to identify; loading test.png as the default image')
-        file_path = '../imgs/dataset_1_light.jpg'
+        file_path = '../imgs/dataset_1.jpg'
     # Did we get a relative path?
     if not os.path.exists(file_path):
         cwd = os.path.abspath(os.path.dirname(__file__))
