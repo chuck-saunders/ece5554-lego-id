@@ -57,10 +57,10 @@ RUN apt-get update
 RUN apt-get install -qy python3-pip
 # # Update pip
 RUN python3 -m pip install --upgrade pip
-# ...and then install opencv-python AND the appropriate version of PyQt5
+# ...and then install opencv-python
 RUN apt-get update && apt-get install -qy libopencv-dev python3-opencv
-RUN python3 -m pip install PyQt5
-# Need qt5 
+RUN sudo apt-get install -qy python3-tk
+# Need qt5; NOTE: Installing PyQt5 will cause a conflict which will throw 'xcb'-related errors for matplotlib.
 RUN apt-get install -qy qt5-default
 # This is required to pull images from URLs
 RUN python3 -m pip install requests

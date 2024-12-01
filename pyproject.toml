@@ -4,7 +4,8 @@ version="0.0.1"
 
 dependencies=[
     "requests",
-    "fpdf2"
+    "fpdf2",
+    "opencv-python"
 ]
 
 [tool.setuptools.packages.find]
