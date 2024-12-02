@@ -49,15 +49,18 @@ RUN echo "Port $ssh_port" >> /etc/ssh/sshd_config && \
     echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config && \
     echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/ssh/sshd_config
     
+RUN apt-get update
+
 # Required for opencv-python
-RUN apt-get install -qy libgl1 ffmpeg
-# Get pip...
+# RUN apt-get install -qy libgl1 ffmpeg
+# # Get pip...
 RUN apt-get install -qy python3-pip
-# Update pip
+# # Update pip
 RUN python3 -m pip install --upgrade pip
-# ...and then install opencv-python AND the appropriate version of PyQt5
-RUN python3 -m pip install opencv-python PyQt5
-# Need qt5 
+# ...and then install opencv-python
+RUN apt-get update && apt-get install -qy libopencv-dev python3-opencv
+RUN sudo apt-get install -qy python3-tk
+# Need qt5; NOTE: Installing PyQt5 will cause a conflict which will throw 'xcb'-related errors for matplotlib.
 RUN apt-get install -qy qt5-default
 # This is required to pull images from URLs
 RUN python3 -m pip install requests

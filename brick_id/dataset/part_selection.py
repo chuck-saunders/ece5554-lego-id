@@ -23,7 +23,7 @@ class RandomizedDataset(object):
         num_available_parts = len(parts_list)
         self.lighting_condition = RandomizedDataset.rng.choice(list(LightingConditions))
         self.background_condition = RandomizedDataset.rng.choice(list(BackgroundConditions))
-        self.part_count = RandomizedDataset.rng.integers(1, max_part_count)
+        self.part_count = 10  # RandomizedDataset.rng.integers(1, max_part_count)
         self.selected_part_counts = dict()
         for i in range(self.part_count):
             selected_part = RandomizedDataset.rng.integers(1, num_available_parts)
@@ -172,7 +172,7 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 imgs_path = cwd + '/imgs/'
 
 # Parameters per the test procedure described in the project proposal
-num_images = 25
+num_images = 10
 datasets = list()
 for i in range(num_images):
     datasets.append(RandomizedDataset())
@@ -351,7 +351,7 @@ for part_number, dataset_requirements in scenario_pull_sheet.items():
         qty = dataset_requirements.get(str(i), 0)
 
         pdf.set_xy(current_x, starting_y + row_one_offset*text_height)
-        pdf.cell(text_width, text_height, f'Set {i+1}', fill=should_fill)
+        pdf.cell(text_width, text_height, f'Set {i}', fill=should_fill)
         pdf.set_xy(current_x, starting_y + row_two_offset*text_height)
         pdf.cell(text_width, text_height, str(qty), fill=should_fill)
 

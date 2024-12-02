@@ -3,9 +3,9 @@ name = "brick_id"
 version="0.0.1"
 
 dependencies=[
-    "opencv-python",
     "requests",
-    "fpdf2"
+    "fpdf2",
+    "opencv-python"
 ]
 
 [tool.setuptools.packages.find]
