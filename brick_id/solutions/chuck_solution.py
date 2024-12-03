@@ -6,6 +6,7 @@ import cv2
 import csv
 import numpy as np
 from typing import Tuple, List
+import pickle
 from brick_id.dataset.catalog import allowable_parts
 
 class MatchableBrick:
@@ -69,11 +70,13 @@ class ChuckSolution(Solution):
         self.descriptors_per_brick = 100 # How many descriptors should we choose to create a representative collection?
         # I tried using 5000 descriptors per brick and the model crashed when I tried to train it.
         self.sift = cv2.SIFT.create(self.max_sift_features)
-        self.em = cv2.ml.EM.create()
+        #self.em = cv2.ml.EM.create()
+        self.predictor = cv2.ml.SVM.create()
         self.matcher = cv2.BFMatcher()
+        self.catalog = allowable_parts()
 
 
-        model_filename = 'chuck_em_model.xml'
+        model_filename = 'chuck_svm_model.pkl'
         model_path = os.path.join(cwd, model_filename)
 
         # Do we have the model already?
@@ -219,16 +222,23 @@ class ChuckSolution(Solution):
             print('Training the model...')
             brick_ids = [f.name for f in os.scandir(b200c_dir) if f.is_dir()]
             num_bricks = len(brick_ids)
-            self.em.setClustersNumber(num_bricks)
-            self.em.train(training_data)
+            # Only necessary for Expectation Maximization
+            # self.em.setClustersNumber(num_bricks)
+            self.predictor.train(training_data)
+            # self.em.train(training_data)
 
             print(f'Done! Writing the model to {model_path}')
-            fs = cv2.FileStorage(model_path, cv2.FILE_STORAGE_WRITE)
-            self.em.write(fs)
+            with open(model_path, 'wb') as f:
+                pickle.dump(self.predictor, f)
+            # fs = cv2.FileStorage(model_path, cv2.FILE_STORAGE_WRITE)
+            # self.predictor.write(fs)
             print('Done!')
         else:
             print('Found the model file, loading it now...')
-            self.em.load(model_path)
+            # self.em.load(model_path, )
+            # self.predictor.load(model_path)
+            with open(model_path, 'rb') as f:
+                self.predictor = pickle.load(f)
             print('Done!')
 
 
@@ -238,22 +248,19 @@ class ChuckSolution(Solution):
         if des is None:
             print('Failed to extract descriptors from the provided image!')
             return Brick.NOT_IN_CATALOG
-        image_descriptors = self.sift.detectAndCompute(blob, None)
-        image_descriptors = np.array(image_descriptors)
-        result = self.em.predict(image_descriptors)
+        result = self.predictor.predict(des)
 
-        print(f'Got the following: result[0] is:\n{result[0]}\nresult[1] is:\n{result[1]}')
+        best_guess = int(result[0])
 
-        #
-        # brick_id = Brick(best_brick).name
-        # if best_brick > 0:
-        #     brick_id = brick_id[1:]
-        #     brick_description = self.catalog[brick_id]
-        # else:
-        #     brick_description = 'NOT IN CATALOG'
-        # print(f'Guessed {brick_id} for that image; description: {brick_description}')
+        brick_id = Brick(best_guess).name
+        if best_guess > 0:
+            brick_id = brick_id[1:]
+            brick_description = self.catalog[brick_id]
+        else:
+            brick_description = 'NOT IN CATALOG'
+        print(f'Guessed {brick_id} for that image; description: {brick_description}')
 
-        return best_brick
+        return Brick.NOT_IN_CATALOG
 
 
 
