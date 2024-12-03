@@ -66,237 +66,170 @@ class ChuckSolution(Solution):
 
 
         self.max_sift_features = 50 # How many descriptors should we try to find in an images?
-        self.min_descriptor_count = 8 # At least how many descriptors need to be found to call it a good image?
+        self.descriptors_per_brick = 100 # How many descriptors should we choose to create a representative collection?
+        # I tried using 5000 descriptors per brick and the model crashed when I tried to train it.
         self.sift = cv2.SIFT.create(self.max_sift_features)
         self.em = cv2.ml.EM.create()
         self.matcher = cv2.BFMatcher()
 
-        self.matchable_bricks = [
-            MatchableBrick('62462', ['577', '578', '814', '1065']),
-            MatchableBrick('11211', ['110', '1367', '428', '149']),
-            MatchableBrick('87552', ['109', '1029', '619', '431']),
-            MatchableBrick('3749', ['4', '142', '1023', '565']),
-            MatchableBrick('11214', ['24', '35', '141', '325', '410']),
-            MatchableBrick('11090', ['2','13','15','16','26','49','68']),
-            MatchableBrick('11212', ['3', '11', '26','31','34','39','57']),
-            MatchableBrick('18677', ['23','57','58','68','70','89']),
-            MatchableBrick('87620', ['22', '78', '115', '142', '182', '367', '384']),
-            MatchableBrick('2454', ['269', '279', '334', '444', '647']),
-            MatchableBrick('85984', ['24', '45', '144', '228', '256', '357']),
-            MatchableBrick('60474', ['0', '10', '16', '21', '37', '184']),
-            MatchableBrick('11458', ['2', '17', '66', '69', '70', '105']),
-            MatchableBrick('18654', ['12', '16', '22', '43', '61']),
-            MatchableBrick('3020', ['64', '68', '78', '106', '145', '312']),
-            MatchableBrick('6558', ['18', '99', '105', '142', '494']),
-            MatchableBrick('2429', ['22', '23', '28', '73', '74']),
-            MatchableBrick('41677', ['138', '152', '173', '196', '242']),
-            MatchableBrick('32140', ['17', '24', '184', '318', '485']),
-            MatchableBrick('60479', ['324', '361', '3880']),
-            MatchableBrick('3008', ['191', '315', '396']),
-            MatchableBrick('3023', ['15', '57', '58', '107', '108']),
-            MatchableBrick('32523', ['23', '29', '115', '116', '117']),
-            MatchableBrick('2654', ['3', '8', '11', '20', '21']),
-            MatchableBrick('48336', ['7', '16', '17', '25', '28', '35']),
-            MatchableBrick('87083', ['148', '225', '275', '283', '311']),
-            MatchableBrick('44728', ['22', '30', '31', '32', '226']),
-            MatchableBrick('4274', ['15', '25', '46', '63', '73']),
-            MatchableBrick('2357', ['15', '18', '34', '33', '26', '32']),
-            MatchableBrick('85861', ['2', '6', '13', '17', '104', '136']),
-            MatchableBrick('3622', ['16', '17', '8', '33', '34', '39']),
-            MatchableBrick('60478', ['15', '16', '18', '34', '100']),
-            MatchableBrick('3040', ['105', '110', '144', '160', '194']),
-            MatchableBrick('88072', ['15', '22', '75', '130', '158']),
-            MatchableBrick('2430', ['5', '22', '23', '34', '57', '63']),
-            MatchableBrick('3795', ['15', '17', '64', '102', '159']),
-            MatchableBrick('4286', ['58', '66', '150', '185']),
-            MatchableBrick('87580', ['2', '3', '10', '17', '19']),
-            MatchableBrick('3710', ['16', '24', '111', '109']),
 
-            # MatchableBrick('3039', []),
-            # MatchableBrick('41770', []),
-            # MatchableBrick('4085', []),
-            # MatchableBrick('3032', []),
-            # MatchableBrick('3666', []),
-            # MatchableBrick('41769', []),
-            # MatchableBrick('85080', []),
-            # MatchableBrick('3070b', []),
-            # MatchableBrick('30136', []),
-            # MatchableBrick('14704', []),
-            # MatchableBrick('3705', []),
-            # MatchableBrick('30374', []),
-            # MatchableBrick('3460', []),
-            # MatchableBrick('41740', []),
-            # MatchableBrick('3713', []),
-            # MatchableBrick('15379', []),
-            # MatchableBrick('3034', []),
-            # MatchableBrick('32952', []),
-            # MatchableBrick('15573', []),
-            # MatchableBrick('3004', []),
-            #
-            # MatchableBrick('53451', []),
-            # MatchableBrick('4589', []),
-            # MatchableBrick('2420', []),
-            # MatchableBrick('99207', []),
-            # MatchableBrick('32000', []),
-            # MatchableBrick('3673', []),
-            # MatchableBrick('60601', []),
-            # MatchableBrick('24201', []),
-            # MatchableBrick('61252', []),
-            # MatchableBrick('64644', []),
-            # MatchableBrick('87994', []),
-            # MatchableBrick('4519', []),
-            # MatchableBrick('4081b', []),
-            # MatchableBrick('3958', []),
-            # MatchableBrick('3037', []),
-            # MatchableBrick('3021', []),
-            # MatchableBrick('32278', []),
-            # MatchableBrick('4070', []),
-            # MatchableBrick('47457', []),
-        ]
+        model_filename = 'chuck_em_model.xml'
+        model_path = os.path.join(cwd, model_filename)
 
-        self.catalog = allowable_parts()
+        # Do we have the model already?
+        if not os.path.exists(model_path):
+            print('Model not found, looking for saved training data...')
+            # Okay, if we don't, do we at least have the training data available?
+            training_data_filename = 'chuck_training_data.csv'
+            training_data_path = os.path.join(cwd, training_data_filename)
 
-        # self.required_bricks = [
-        #
-        # model_filename = 'chuck_em_model.xml'
-        # model_path = os.path.join(cwd, model_filename)
-        #
-        # # # Do we have the model already?
-        # # if not os.path.exists(model_path):
-        # #     print('Model not found, looking for saved training data...')
-        # #     # Okay, if we don't, do we at least have the training data available?
-        # #     training_data_filename = 'chuck_training_data.csv'
-        # #     training_data_path = os.path.join(cwd, training_data_filename)
-        # #
-        # #     feature_array = np.array(0)
-        # #     if not os.path.exists(training_data_path):
-        # #         print('Training data not found, creating training data. This will take a while...')
-        # #         # Create the training data. This is going to take some time.
-        #
-        # # How many images are we going to read?
-        # n_images = 0
-        #
-        # # Search the directories first so we can pre-allocate the feature array
-        # # Path scraping from https://stackoverflow.com/a/59938961/5171120
-        # brick_ids = [f.name for f in os.scandir(b200c_dir) if f.is_dir()]
-        # for brick_id in brick_ids:
-        #     if brick_id not in self.required_bricks:
-        #         continue
-        #     brick_path = os.path.join(b200c_dir, brick_id)
-        #     image_paths = [f.path for f in os.scandir(brick_path) if f.is_file()]
-        #     n_images += len(image_paths)
-        # print(f'Need to load {n_images} images')
-        # sift_descriptor_length = 128
-        #
-        # # This answer on Stack Overflow was helpful for understanding how to format the descriptors to be consumed
-        # # by the TrainData.create method: https://stackoverflow.com/a/53730463/5171120
-        # # One row for each image, columns for the SIFT descriptors, plus one more column for the label
-        # feature_array = np.zeros((n_images, self.max_sift_features*sift_descriptor_length + 1),
-        #                          dtype=np.float32)
-        # current_ct = 0
-        # notify_ct = 50
-        # most_descriptors = 0
-        # descriptor_dict = dict()
-        # descriptor_max_count = 0
-        #
-        # # Create a BFMatcher object
-        # bf = cv2.BFMatcher()
-        #
-        # for brick_id in brick_ids:
-        #     if brick_id not in self.required_bricks:
-        #         continue
-        #     brick_path = os.path.join(b200c_dir, brick_id)
-        #     image_paths = [f.path for f in os.scandir(brick_path) if f.is_file()]
-        #     views = list()
-        #
-        #     for image_path in image_paths:
-        #         current_ct += 1
-        #         if np.mod(current_ct, notify_ct) == 0:
-        #             print(f'Currently on {current_ct} of {n_images}')
-        #         image = cv2.imread(image_path)
-        #         kp, des = self.sift.detectAndCompute(image, None)
-        #
-        #         # Bad image, didn't find any descriptors!
-        #         if des is None:
-        #             continue
-        #         des = np.array(des)
-        #
-        #         # Poor image, only found a few descriptors!
-        #         if des.shape[0] < self.min_descriptor_count:
-        #             continue
-        #
-        #         if len(views) == 0:
-        #             views.append(des)
-        #         else:
-        #             view_found = False
-        #             for view in views:
-        #                 # Want to match 50% of the descriptors to call it a consistent view... I think?
-        #                 min_matches = int(0.5*des.shape[0])
-        #
-        #                 # Matching test from the OpenCV tutorial:
-        #                 # https://docs.opencv.org/3.4/dc/dc3/tutorial_py_matcher.html
-        #
-        #                 matches = bf.knnMatch(des, view, k=2)
-        #                 # Apply ratio test
-        #                 good_matches = 0
-        #                 for m, n in matches:
-        #                     if m.distance < 0.75 * n.distance:
-        #                         good_matches += 1
-        #                 print(f'Found {good_matches} matches')
-        #
-        #                 # If we meet the min_matches threshold, then we've matched a known view of the object and we
-        #                 # can stop looking.
-        #                 if good_matches >= min_matches:
-        #                     view_found = True
-        #                     break
-        #
-        #             # If we didn't match a known view, maybe it's a new view!
-        #             if not view_found:
-        #                 views.append(des)
-        #                 print(f'Added a view, currently at {len(views)} views')
-        #     print(f'Found {len(views)} views, view has {views[0].shape[0]} descriptors')
-        #
+            feature_array = np.array(0)
+            if not os.path.exists(training_data_path):
+                # I did this once for pulling 5000 descriptors per brick, and it's going to be faster to sample that
+                # than to re-extract features to build a new csv.
+                dataset_5k_path = os.path.join(cwd, 'chuck_training_data_5k.csv')
+                if os.path.exists(dataset_5k_path):
+                    # Load the data from the CSV file
+                    print(f'Found the 5000-descriptor-per-brick dataset, downsampling to {self.descriptors_per_brick} '
+                          f'per brick')
+                    data = np.loadtxt(dataset_5k_path, delimiter=",")
 
-                # if des.shape[0] > most_descriptors:
-                #     most_descriptors = des.shape[0]
-                #
-                # if des.shape[0] > self.max_sift_features:
-                #     des = des[:self.max_sift_features, :]
-                # des = des.reshape(1, -1)
-                #
-                # feature_array[current_ct - 1, 0:des.shape[1]] = des
-                # feature_array[current_ct - 1, self.max_sift_features * sift_descriptor_length] = int(
-                #     Brick['_' + brick_id])
-        #         if most_descriptors > self.max_sift_features:
-        #             print(f'Maximum number of descriptors was exceeded; most found was {most_descriptors}')
-        #         # Loop  through the directories again, this time extracting features from the images
-        #         with open(os.path.join(cwd, 'chuck_training_data.csv'), 'w') as csvfile:
-        #             writer = csv.writer(csvfile, delimiter=',')
-        #             writer.writerows(feature_array)
-        #     else:
-        #         print('Found training data, loading now...')
-        #         # This section of code from Google's AI Overview in response to the search query "AttributeError: type object
-        #         # 'cv2.ml.TrainData' has no attribute 'loadFromCSV'", searched on 30NOV2024
-        #
-        #         # Load the data from the CSV file
-        #         data = np.loadtxt(training_data_path, delimiter=",")
-        #
-        #         # Split the data into features and labels
-        #         features = data[:, :-1].astype(np.float32)
-        #         labels = data[:, -1].astype(np.int32)
-        #
-        #         print('Loaded the CSV, creating a training dataset...')
-        #         training_data = cv2.ml.TrainData.create(features, cv2.ml.ROW_SAMPLE, labels)
-        #
-        #         print('Training the model...')
-        #         self.em.train(training_data)
-        #
-        #         print(f'Done! Writing the model to {model_path}')
-        #         fs = cv2.FileStorage(model_path, cv2.FILE_STORAGE_WRITE)
-        #         self.em.write(fs)
-        #         print('Done!')
-        # else:
-        #     self.em.load(model_path)
+                    # Split the data into features and labels
+                    full_dataset_features = data[:, :-1].astype(np.float32)
+                    full_dataset_labels = data[:, -1].astype(np.int32)
+                    rows_per_image = 5000
+                    rows_to_skip = int(rows_per_image/self.descriptors_per_brick)
+                    full_dataset_features = full_dataset_features[::rows_to_skip, :]
+                    n_features = full_dataset_features.shape[0]
+                    full_dataset_labels = full_dataset_labels[::rows_to_skip].reshape(n_features,1)
+                    print(f'Min label is {np.min(full_dataset_labels)}, max label is {np.max(full_dataset_labels)}')
+
+                    # Write the downsampled dataset to the target CSV
+                    print('Finished collecting image features, writing to CSV...')
+                    with open(os.path.join(cwd, training_data_filename), 'w') as csvfile:
+                        writer = csv.writer(csvfile, delimiter=',')
+                        feature_array = np.hstack((full_dataset_features, full_dataset_labels))
+                        writer.writerows(feature_array)
+                    print('Finished creating the CSV, creating a training dataset...')
+                else:
+                    print('Training data not found, creating training data. This will take a while...')
+                    # Create the training data. This is going to take some time.
+
+                    # How many images are we going to read?
+                    n_images = 0
+
+                    # Search the directories first so we can pre-allocate the feature array
+                    # Path scraping from https://stackoverflow.com/a/59938961/5171120
+                    brick_ids = [f.name for f in os.scandir(b200c_dir) if f.is_dir()]
+                    for brick_id in brick_ids:
+                        brick_path = os.path.join(b200c_dir, brick_id)
+                        image_paths = [f.path for f in os.scandir(brick_path) if f.is_file()]
+                        n_images += len(image_paths)
+                    print(f'Need to load {n_images} images')
+
+                    sift_descriptor_length = 128
+
+                    # This answer on Stack Overflow was helpful for understanding how to format the descriptors to be
+                    # consumed by the TrainData.create method: https://stackoverflow.com/a/53730463/5171120
+                    # One row for each image, columns for the SIFT descriptors, plus one more column for the label
+                    full_dataset_features = np.zeros((len(brick_ids)*self.descriptors_per_brick, sift_descriptor_length),
+                                                 dtype=np.float32)
+                    full_dataset_labels = np.zeros((len(brick_ids)*self.descriptors_per_brick, 1), dtype=np.int32)
+                    current_brick = 0
+                    current_ct = 0
+                    notify_ct = 500
+
+                    # Don't keep resizing these arrays, just preallocate a lot and then resize only if necessary. I know
+                    # these are huge arrays, but running this once gave 182499 as the peak number of descriptors found
+                    # for a single brick (when self.max_sift_features is 50).
+                    brick_descriptors = np.zeros((182499, sift_descriptor_length), dtype=np.float32)
+                    brick_labels = np.zeros((182499, 1), dtype=np.int32)
+                    most_descriptors_found = 0
+                    for brick_id in brick_ids:
+                        current_array_index = 0
+                        brick_path = os.path.join(b200c_dir, brick_id)
+                        image_paths = [f.path for f in os.scandir(brick_path) if f.is_file()]
+
+                        brick_int_value = int(Brick['_' + brick_id])
+                        descriptors_found = 0
+                        for image_path in image_paths:
+                            current_ct += 1
+                            if np.mod(current_ct, notify_ct) == 0:
+                                print(f'Currently on {current_ct} of {n_images}')
+                            image = cv2.imread(image_path)
+                            kp, image_descriptors = self.sift.detectAndCompute(image, None)
+
+                            # Bad image, didn't find any descriptors!
+                            if image_descriptors is None:
+                                continue
+                            image_descriptors = np.array(image_descriptors)
+                            descriptor_count = image_descriptors.shape[0]
+                            descriptors_found += descriptor_count
+                            image_labels = np.ones((image_descriptors.shape[0], 1), dtype=np.int32) * brick_int_value
+
+                            # Add the descriptors to the collection
+                            start_idx = current_array_index
+                            current_array_index += descriptor_count
+                            end_idx = current_array_index
+                            if end_idx > brick_descriptors.shape[0]:
+                                brick_descriptors.resize((end_idx, sift_descriptor_length))
+                                brick_labels.resize((end_idx, 1))
+                            brick_descriptors[start_idx:end_idx, :] = image_descriptors
+                            brick_labels[start_idx:end_idx] = image_labels
+
+                        # Cache the peak number of descriptors found for a single brick for curiosity
+                        most_descriptors_found = np.max((most_descriptors_found, descriptors_found))
+
+                        # Check that we found a reasonable number of descriptors
+                        if descriptors_found < self.descriptors_per_brick:
+                            raise Exception(f'Expected to find at least {self.descriptors_per_brick} descriptors but '
+                                            f'found {descriptors_found} instead for brick {brick_id}')
+
+                        # Pick self.descriptors_per_brick rows randomly from the collection
+                        random_rows = np.random.choice(descriptors_found, size=self.descriptors_per_brick, replace=False)
+
+                        # Add those rows to the output
+                        start_idx = current_brick * self.descriptors_per_brick
+                        current_brick += 1
+                        end_idx = current_brick * self.descriptors_per_brick
+                        full_dataset_features[start_idx:end_idx, :] = brick_descriptors[random_rows, :]
+                        full_dataset_labels[start_idx:end_idx, :] = brick_labels[random_rows, :]
+                    print('Finished collecting image features, writing to CSV...')
+                    print(f'(the most descriptors found for a single brick was {most_descriptors_found})')
+                    with open(os.path.join(cwd, training_data_filename), 'w') as csvfile:
+                        writer = csv.writer(csvfile, delimiter=',')
+                        feature_array = np.hstack((full_dataset_features, full_dataset_labels))
+                        writer.writerows(feature_array)
+                    print('Finished creating the CSV, creating a training dataset...')
+            else:
+                print('Found training data, loading now...')
+                # This section of code from Google's AI Overview in response to the search query "AttributeError: type object
+                # 'cv2.ml.TrainData' has no attribute 'loadFromCSV'", searched on 30NOV2024
+
+                # Load the data from the CSV file
+                data = np.loadtxt(training_data_path, delimiter=",")
+
+                # Split the data into features and labels
+                full_dataset_features = data[:, :-1].astype(np.float32)
+                full_dataset_labels = data[:, -1].astype(np.int32)
+                print('Loaded the CSV, creating a training dataset...')
+            training_data = cv2.ml.TrainData.create(full_dataset_features, cv2.ml.ROW_SAMPLE,
+                                                    full_dataset_labels)
+
+            print('Training the model...')
+            brick_ids = [f.name for f in os.scandir(b200c_dir) if f.is_dir()]
+            num_bricks = len(brick_ids)
+            self.em.setClustersNumber(num_bricks)
+            self.em.train(training_data)
+
+            print(f'Done! Writing the model to {model_path}')
+            fs = cv2.FileStorage(model_path, cv2.FILE_STORAGE_WRITE)
+            self.em.write(fs)
+            print('Done!')
+        else:
+            print('Found the model file, loading it now...')
+            self.em.load(model_path)
+            print('Done!')
 
 
 
@@ -305,20 +238,20 @@ class ChuckSolution(Solution):
         if des is None:
             print('Failed to extract descriptors from the provided image!')
             return Brick.NOT_IN_CATALOG
-        best_match = 0
-        best_brick = Brick.NOT_IN_CATALOG
-        for brick in self.matchable_bricks:
-            test_brick, test_match = brick.try_match(self.matcher, des)
-            if test_match > best_match:
-                best_match = test_match
-                best_brick = test_brick
-        brick_id = Brick(best_brick).name
-        if best_brick > 0:
-            brick_id = brick_id[1:]
-            brick_description = self.catalog[brick_id]
-        else:
-            brick_description = 'NOT IN CATALOG'
-        print(f'Guessed {brick_id} for that image; description: {brick_description}')
+        image_descriptors = self.sift.detectAndCompute(blob, None)
+        image_descriptors = np.array(image_descriptors)
+        result = self.em.predict(image_descriptors)
+
+        print(f'Got the following: result[0] is:\n{result[0]}\nresult[1] is:\n{result[1]}')
+
+        #
+        # brick_id = Brick(best_brick).name
+        # if best_brick > 0:
+        #     brick_id = brick_id[1:]
+        #     brick_description = self.catalog[brick_id]
+        # else:
+        #     brick_description = 'NOT IN CATALOG'
+        # print(f'Guessed {brick_id} for that image; description: {brick_description}')
 
         return best_brick
 
