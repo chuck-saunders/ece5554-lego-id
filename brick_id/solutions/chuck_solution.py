@@ -76,7 +76,7 @@ class ChuckSolution(Solution):
         self.catalog = allowable_parts()
 
 
-        model_filename = 'chuck_svm_model.pkl'
+        model_filename = 'chuck_svm_model.dat'
         model_path = os.path.join(cwd, model_filename)
 
         # Do we have the model already?
@@ -228,17 +228,18 @@ class ChuckSolution(Solution):
             # self.em.train(training_data)
 
             print(f'Done! Writing the model to {model_path}')
-            with open(model_path, 'wb') as f:
-                pickle.dump(self.predictor, f)
+            self.predictor.save(model_path)
+            # with open(model_path, 'wb') as f:
+            #     pickle.dump(self.predictor, f)
             # fs = cv2.FileStorage(model_path, cv2.FILE_STORAGE_WRITE)
             # self.predictor.write(fs)
             print('Done!')
         else:
             print('Found the model file, loading it now...')
             # self.em.load(model_path, )
-            # self.predictor.load(model_path)
-            with open(model_path, 'rb') as f:
-                self.predictor = pickle.load(f)
+            self.predictor.load(model_path)
+            # with open(model_path, 'rb') as f:
+            #     self.predictor = pickle.load(f)
             print('Done!')
 
 
