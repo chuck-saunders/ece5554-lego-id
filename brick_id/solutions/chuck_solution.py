@@ -67,17 +67,22 @@ class ChuckSolution(Solution):
 
 
         self.max_sift_features = 50 # How many descriptors should we try to find in an images?
-        self.descriptors_per_brick = 100 # How many descriptors should we choose to create a representative collection?
+        self.descriptors_per_brick = 5000 # How many descriptors should we choose to create a representative collection?
         # I tried using 5000 descriptors per brick and the model crashed when I tried to train it.
         self.sift = cv2.SIFT.create(self.max_sift_features)
-        #self.em = cv2.ml.EM.create()
-        self.predictor = cv2.ml.SVM.create()
         self.matcher = cv2.BFMatcher()
+        self.bow_extractor = cv2.BOWImgDescriptorExtractor(self.sift, self.matcher)
+        #self.em = cv2.ml.EM.create()
+        #self.predictor = cv2.ml.EM.create()
+
+        # Here's the concept: Get all the features,
+        self.predictor = cv2.ml.SVM.create()
         self.catalog = allowable_parts()
 
 
-        model_filename = 'chuck_svm_model.dat'
+        model_filename = 'chuck_kmeans_svm_model.dat'
         model_path = os.path.join(cwd, model_filename)
+        centers_path = os.path.join(cwd, 'cluster_450_centers.dat')
 
         # Do we have the model already?
         if not os.path.exists(model_path):
@@ -216,28 +221,130 @@ class ChuckSolution(Solution):
                 full_dataset_features = data[:, :-1].astype(np.float32)
                 full_dataset_labels = data[:, -1].astype(np.int32)
                 print('Loaded the CSV, creating a training dataset...')
-            training_data = cv2.ml.TrainData.create(full_dataset_features, cv2.ml.ROW_SAMPLE,
-                                                    full_dataset_labels)
+
+            bow_filename = 'chuck_bow_dataset.csv'
+            bow_path = os.path.join(cwd, bow_filename)
+            if not os.path.exists(bow_path):
+                if not os.path.exists(centers_path):
+
+                    # You can pick more sizes here, but I did it in increments of 50 from 50 to 500 and increments of 250
+                    # from 750 to 2500 and the "elbow" happens around 450. For the purposes of recovering the 'good' cluster
+                    # values, we can just use 450 as the cluster size.
+                    cluster_sizes = np.array([450])
+                    sum_sqr_distances = np.zeros_like(cluster_sizes)
+                    current_cluster = 0
+                    for cluster_size in cluster_sizes:
+                        print(f'Trying to fit kmeans to data with cluster size {cluster_size}...')
+                        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+                        sum_sqr_dist, labels, centers = cv2.kmeans(full_dataset_features, cluster_size, None, criteria,10, cv2.KMEANS_RANDOM_CENTERS)
+                        sum_sqr_distances[current_cluster] = sum_sqr_dist
+                        current_cluster += 1
+                        with open(os.path.join(cwd, 'cluster_' + str(cluster_size) + '_labels.dat'), 'wb') as f:
+                            pickle.dump(labels, f)
+                        with open(os.path.join(cwd, 'cluster_' + str(cluster_size) + '_centers.dat'), 'wb') as f:
+                            pickle.dump(centers, f)
+                        with open(os.path.join(cwd, 'cluster_' + str(cluster_size) + '_sum_sqr_dist.dat'), 'wb') as f:
+                            pickle.dump(sum_sqr_dist, f)
+                        print(f'SSD value is {sum_sqr_dist} for {cluster_size} clusters')
+                    plt.figure(figsize=(6, 6))
+                    plt.plot(cluster_sizes, sum_sqr_distances, '-o')
+                    plt.xlabel(r'Number of clusters *k*')
+                    plt.ylabel('Sum of squared distance')
+                    plt.show()
+                else:
+                    with open(centers_path, 'rb') as f:
+                        centers = pickle.load(f)
+
+                # From Google's AI Overview in response to the query "train bag of words opencv" searched 03DEC2024.
+
+                vocabulary = centers
+
+                self.bow_extractor.setVocabulary(vocabulary)
+
+                brick_ids = [f.name for f in os.scandir(b200c_dir) if f.is_dir()]
+                n_images = 0
+                for brick_id in brick_ids:
+                    brick_path = os.path.join(b200c_dir, brick_id)
+                    image_paths = [f.path for f in os.scandir(brick_path) if f.is_file()]
+                    n_images += len(image_paths)
+                print(f'Need to load {n_images} images')
+
+                n_words = len(vocabulary)
+
+                # This answer on Stack Overflow was helpful for understanding how to format the descriptors to be
+                # consumed by the TrainData.create method: https://stackoverflow.com/a/53730463/5171120
+                # One row for each image, columns for the SIFT descriptors, plus one more column for the label
+                bow_descriptors = np.zeros((n_images, n_words), dtype=np.float32)
+                bow_labels = np.zeros((n_images, 1), dtype=np.int32)
+                current_brick = 0
+                current_ct = 0
+                notify_ct = 500
+                valid_imgs = 0
+                for brick_id in brick_ids:
+                    brick_path = os.path.join(b200c_dir, brick_id)
+                    image_paths = [f.path for f in os.scandir(brick_path) if f.is_file()]
+
+                    brick_int_value = int(Brick['_' + brick_id])
+                    for image_path in image_paths:
+                        current_ct += 1
+                        if np.mod(current_ct, notify_ct) == 0:
+                            print(f'Currently on {current_ct} of {n_images}')
+                        img = cv2.imread(image_path)
+                        kp, image_descriptors = self.sift.detectAndCompute(img, None)
+                        if image_descriptors is None:
+                            continue
+                        bow_descriptor = self.bow_extractor.compute(img, kp)
+                        bow_descriptors[valid_imgs, :] = bow_descriptor
+                        bow_labels[valid_imgs, :] = brick_int_value
+                        valid_imgs += 1
+                bow_descriptors.resize((valid_imgs, bow_descriptors.shape[1]))
+                bow_labels.resize((valid_imgs, 1))
+                with open(bow_path, 'w') as csvfile:
+                    writer = csv.writer(csvfile, delimiter=',')
+                    feature_array = np.hstack((bow_descriptors, bow_labels))
+                    writer.writerows(feature_array)
+                print('Finished creating the bag-of-words CSV, creating a training dataset...')
+            else:
+                print('Found bag-of-words data, loading now...')
+                # This section of code from Google's AI Overview in response to the search query "AttributeError: type object
+                # 'cv2.ml.TrainData' has no attribute 'loadFromCSV'", searched on 30NOV2024
+
+                with open(centers_path, 'rb') as f:
+                    centers = pickle.load(f)
+                vocabulary = centers
+                self.bow_extractor.setVocabulary(vocabulary)
+
+                # Load the data from the CSV file
+                data = np.loadtxt(bow_path, delimiter=",")
+
+                # Split the data into features and labels
+                bow_descriptors = data[:, :-1].astype(np.float32)
+                bow_labels = data[:, -1].astype(np.int32)
+                print('Loaded the bag-of-words CSV, creating a training dataset...')
+
+            training_data = cv2.ml.TrainData.create(bow_descriptors, cv2.ml.ROW_SAMPLE, bow_labels)
 
             print('Training the model...')
-            brick_ids = [f.name for f in os.scandir(b200c_dir) if f.is_dir()]
-            num_bricks = len(brick_ids)
+
             # Only necessary for Expectation Maximization
-            # self.em.setClustersNumber(num_bricks)
+            #self.predictor.setClustersNumber(num_bricks)
             self.predictor.train(training_data)
             # self.em.train(training_data)
 
             print(f'Done! Writing the model to {model_path}')
             self.predictor.save(model_path)
-            # with open(model_path, 'wb') as f:
-            #     pickle.dump(self.predictor, f)
-            # fs = cv2.FileStorage(model_path, cv2.FILE_STORAGE_WRITE)
-            # self.predictor.write(fs)
             print('Done!')
         else:
             print('Found the model file, loading it now...')
+
+            with open(centers_path, 'rb') as f:
+                centers = pickle.load(f)
+            vocabulary = centers
+            self.bow_extractor.setVocabulary(vocabulary)
+
             # self.em.load(model_path, )
-            self.predictor.load(model_path)
+            #self.predictor = cv2.ml.EM.load(model_path)
+            self.predictor = cv2.ml.SVM.load(model_path)
             # with open(model_path, 'rb') as f:
             #     self.predictor = pickle.load(f)
             print('Done!')
@@ -245,12 +352,14 @@ class ChuckSolution(Solution):
 
 
     def identify(self, blob):
+
         kp, des = self.sift.detectAndCompute(blob, None)
         if des is None:
             print('Failed to extract descriptors from the provided image!')
             return Brick.NOT_IN_CATALOG
-        result = self.predictor.predict(des)
-
+        bow_descriptor = self.bow_extractor.compute(blob, kp)
+        result = self.predictor.predict(bow_descriptor)
+        print(f'Result [0] is:\n{result[0]}\nResult [1] is:\n{result[1]}')
         best_guess = int(result[0])
 
         brick_id = Brick(best_guess).name

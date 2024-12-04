@@ -17,8 +17,9 @@ def identify(path: str):
     solutions = [ChuckSolution()]#, KaylaSolution(), ShaneSolution()]
     # results = list()
     for object_extent in object_extents:
+        padding = 0
         xmin, xmax, ymin, ymax = object_extent
-        cropped_img = img[ymin:ymax, xmin:xmax]
+        cropped_img = img[(ymin-padding):(ymax+padding), (xmin-padding):(xmax+padding)]
         guesses = list()
         for solution in solutions:
             guess = solution.identify(cropped_img)
