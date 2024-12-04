@@ -16,7 +16,7 @@ from glob import glob
 def test_all():
     # Test against all re-recaptured images:
     cwd = os.path.abspath(os.path.dirname(__file__))
-    dataset_ids = [0,1]#range(10)
+    dataset_ids = range(10)
 
     # Pull ground truth for those images:
     ground_truth_data = dict()
