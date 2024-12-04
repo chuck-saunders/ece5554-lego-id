@@ -359,8 +359,7 @@ class ChuckSolution(Solution):
             return Brick.NOT_IN_CATALOG
         bow_descriptor = self.bow_extractor.compute(blob, kp)
         result = self.predictor.predict(bow_descriptor)
-        print(f'Result [0] is:\n{result[0]}\nResult [1] is:\n{result[1]}')
-        best_guess = int(result[0])
+        best_guess = int(result[1])
 
         brick_id = Brick(best_guess).name
         if best_guess > 0:
@@ -370,7 +369,7 @@ class ChuckSolution(Solution):
             brick_description = 'NOT IN CATALOG'
         print(f'Guessed {brick_id} for that image; description: {brick_description}')
 
-        return Brick.NOT_IN_CATALOG
+        return best_guess
 
 
 
