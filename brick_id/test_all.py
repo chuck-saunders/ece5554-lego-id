@@ -64,6 +64,7 @@ def test_all():
             result = [ground_truth_label, guesses]
         results[dataset_id] = result
     with open(os.path.join(cwd, 'results.csv'), 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
         for dataset_id in results.keys():
             result = results[dataset_id]
             row = list()
@@ -71,7 +72,7 @@ def test_all():
             row.append(str(result[0][1]))
             for guess in result[1]:
                 row.append(str(guess))
-            csvfile.write(row)
+            writer.writerow(row)
 
 
 if __name__ == '__main__':
