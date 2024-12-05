@@ -1,4 +1,6 @@
-FROM ubuntu:20.04
+# Change 20.04 to 22.04 to get common tensorflow version - model doesn't work
+# when trained with 22.04 and run on 20.04 :(
+FROM ubuntu:22.04
 
 ARG TARGETARCH=amd64
 ARG TARGETOS=linux
@@ -61,7 +63,9 @@ RUN python3 -m pip install --upgrade pip
 RUN apt-get update && apt-get install -qy libopencv-dev python3-opencv
 RUN sudo apt-get install -qy python3-tk
 # Need qt5; NOTE: Installing PyQt5 will cause a conflict which will throw 'xcb'-related errors for matplotlib.
-RUN apt-get install -qy qt5-default
+#RUN apt-get install -qy qt6-default
+# Get tensorflow
+RUN python3 -m pip install tensorflow
 # This is required to pull images from URLs
 RUN python3 -m pip install requests
 # This is required to create the PDF files for the pick lists for the dataset images
