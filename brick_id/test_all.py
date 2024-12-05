@@ -30,7 +30,48 @@ def test_all():
             gt_list.append([x_center, y_center, brick_id])
             ground_truth_data[int(row[0])] = gt_list
 
-    solutions = [ChuckSolution()]  # , KaylaSolution(), ShaneSolution()]
+    solutions = [KaylaSolution()]# , ChuckSolution()] #, ShaneSolution()]
+    yvals = [92758703448.6855,
+            86252990707.9004,
+            82473136732.5381,
+            79875824027.6313,
+            77334220285.6919,
+            75262491223.2461,
+            74254491627.6929,
+            73910137355.9356,
+            72358133811.8684,
+            71943691850.7441,
+            68250219853.1689,
+            65838127451.4873,
+            64898891249.5388,
+            63375167433.502,
+            62278589416.6235,
+            61346186076.6475,
+            60422843309.0671,
+            59884322711.332]
+    xvals = [50,
+            100,
+            150,
+            200,
+            250,
+            300,
+            350,
+            400,
+            450,
+            500,
+            750,
+            1000,
+            1250,
+            1500,
+            1750,
+            2000,
+            2250,
+            2500]
+    plt.plot(xvals, yvals, label='k-means clusters')
+    plt.title('k-means clusters')
+    plt.xlabel('cluster count')
+    plt.ylabel('center distance')
+    plt.show()
 
     results = dict()
     for dataset_id in dataset_ids:
@@ -40,7 +81,7 @@ def test_all():
 
         img_path = os.path.join(cwd, '../imgs/rerecaptured_dataset_' + str(dataset_id) + '.jpg')
         img = cv2.imread(img_path)
-        object_extents = object_segmentation(img)
+        object_extents = object_segmentation(img, show_segmented_image=False)
 
         for object_extent in object_extents:
             padding = 0
@@ -68,6 +109,10 @@ def test_all():
                 if xmin <= x_center <= xmax and ymin <= y_center <= ymax:
                     ground_truth_label = ['Ground Truth', entry[2]]
             print(f'Ground truth is actually: {ground_truth_label[1]}')
+            plt.imshow(cropped_img)
+            plt.axis('off')
+            plt.show()
+
             result.append([ground_truth_label, guesses])
         results[dataset_id] = result
     with open(os.path.join(cwd, 'results.csv'), 'w', newline='') as csvfile:

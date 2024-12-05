@@ -14,7 +14,7 @@ def identify(path: str):
     img = cv2.imread(path)
 
     object_extents = object_segmentation(img)
-    solutions = [ChuckSolution()]#, KaylaSolution(), ShaneSolution()]
+    solutions = [KaylaSolution()]#, ChuckSolution()] #, ShaneSolution()]
     # results = list()
     for object_extent in object_extents:
         padding = 0

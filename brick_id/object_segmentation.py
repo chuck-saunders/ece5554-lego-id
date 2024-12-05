@@ -122,12 +122,13 @@ def collapse_bounding_boxes_with_padding(boxes: List[np.array], img: np.array, p
     return boxes_altered
 
 
-def object_segmentation(input_img: np.array) -> List[np.array]:
+def object_segmentation(input_img: np.array, show_segmented_image=True) -> List[np.array]:
     """
     Segments an image to find individual bricks. This works well when the bricks are spaced such that no brick exists
     within the rectangular extents of any other brick, when the background is uniform, and when there is some color
     difference between the brick and the background.
     :param input_img: The input image to be segmented
+    :param show_segmented_image: Whether to show the image with the bounding boxes overlaid
     :return: A list of bounding boxes that outlines each object in the scene
     """
     # Don't overwrite the original with contours, bounding boxes, etc.
@@ -167,7 +168,8 @@ def object_segmentation(input_img: np.array) -> List[np.array]:
     # Draw contours on the original image
     cv2.drawContours(img, big_contours, -1, (0, 255, 0), 1)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    plt.imshow(img)
-    plt.axis('off')
-    plt.show()
+    if show_segmented_image:
+        plt.imshow(img)
+        plt.axis('off')
+        plt.show()
     return bounding_boxes
