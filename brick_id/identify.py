@@ -14,22 +14,23 @@ def identify(path: str):
     img = cv2.imread(path)
 
     object_extents = object_segmentation(img)
-    solutions = [ChuckSolution(), KaylaSolution(), ShaneSolution()]
-    results = list()
+    solutions = [KaylaSolution()]#, ChuckSolution()] #, ShaneSolution()]
+    # results = list()
     for object_extent in object_extents:
+        padding = 0
         xmin, xmax, ymin, ymax = object_extent
-        cropped_img = img[ymin:ymax, xmin:xmax]
-        plt.imshow(cropped_img)
-        plt.axis('off')
-        plt.show()
+        cropped_img = img[(ymin-padding):(ymax+padding), (xmin-padding):(xmax+padding)]
         guesses = list()
         for solution in solutions:
             guess = solution.identify(cropped_img)
-            guesses.append(guess)
-        print(f'Got {len(guesses)} guesses')
-        result = vote_on(cropped_img, guesses)
-        results.append((cropped_img, result))
-    # TODO: Show the results, calculate scores, etc.
+        plt.imshow(cropped_img)
+        plt.axis('off')
+        plt.show()
+        #     guesses.append(guess)
+        # print(f'Got {len(guesses)} guesses')
+        # result = vote_on(cropped_img, guesses)
+        # results.append((cropped_img, result))
+    # # TODO: Show the results, calculate scores, etc.
 
 
 if __name__ == '__main__':

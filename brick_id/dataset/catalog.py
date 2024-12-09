@@ -1,9 +1,9 @@
 from collections import OrderedDict
-from enum import Enum
+from enum import IntEnum
 from typing import OrderedDict
 
 
-class Brick(Enum):
+class Brick(IntEnum):
     NOT_IN_CATALOG = 0,
     _99781 = 1,
     _99780 = 2,
